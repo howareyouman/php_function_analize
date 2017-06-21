@@ -1,5 +1,5 @@
 <?php
-require_once("./Cache.php");
+require_once("./cache/Cache.php");
 
 main($argc, $argv);
 
@@ -10,18 +10,30 @@ function main($argc, $argv)
         return;
     }
 
-    $directory = $argv[1];
-    $file = $argv[2];
+    $directory = __DIR__ . DIRECTORY_SEPARATOR . $argv[1];
+    $file = __DIR__ . DIRECTORY_SEPARATOR . $argv[2];
 
     try {
         $cache = new Cache($directory);
-
+        $functions = FunctionParser::parse_files_functions($file);
+        foreach ($functions as $function) {
+            $function_full_name = explode(" ", $function);
+            $function_name = $function_full_name[0];
+            $function_line = $function->{'line'};
+            if (!$cache->check_function($function)) {
+                echo get_error_string($function_name, $function_line);
+            }
+        }
     } catch (PathException $exception) {
-
+        echo $exception;
     }
-
-
 }
+
+function get_error_string($function_name, $line) {
+    return "unused function ". $function_name . "on line" . $line;
+}
+
+
 
 
 
