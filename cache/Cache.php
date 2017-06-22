@@ -5,9 +5,12 @@ require_once "../function_parser/FunctionParser.php";
 class Cache
 {
     const CACHE_FILENAME = "__cache__.json";
-    const FILES_USED_IN_CACHE = "__file_index__";
+    const FILES_USED_IN_CACHE = "__file_index__.json";
+    const PHP_FILE_PATTERN = "/^.*\.php/";
+
     private $file_path;
     private $cache_map;
+    private $files_in_use;
 
 
     function __construct($path)
@@ -26,20 +29,30 @@ class Cache
         $file_index_filename = $path . DIRECTORY_SEPARATOR . self::FILES_USED_IN_CACHE;
         if (file_exists($cache_filename) && file_exists($file_index_filename)) {
             $this->cache_map = json_decode(file_get_contents($path));
+            $this->files_in_use = json_decode(file_get_contents($file_index_filename));
+
             $new_files = $this->get_new_files($path);
             if (!empty($new_files)) {
-
+                array_merge($this->files_in_use, $new_files);
+                $this->update_files($new_files);
             }
         } else {
-            $this->cache_map = $this->create_cache($this->file_path);
+            $this->files_in_use = [];
+            $this->cache_map = [];
+            $this->create_cache($this->file_path);
         }
     }
 
-    function store_cache($cache)
+    function store_cache()
     {
         $fp = fopen(self::CACHE_FILENAME, 'w');
-        fwrite($fp, json_encode($cache));
+        fwrite($fp, json_encode($this->cache_map));
         fclose($fp);
+
+        $fp = fopen(self::FILES_USED_IN_CACHE, 'w');
+        fwrite($fp, json_encode($this->files_in_use));
+        fclose($fp);
+
     }
 
     function check_function($function_full_name)
@@ -56,11 +69,13 @@ class Cache
                 ) {
                     return true;
                 } else {
-                    $spoiled_files[] = $file_name;
+                    $spoiled_files[$file_name] = $file_name;
                 }
             }
             $this->cache_map->{$function_full_name} = [];
-            $this->update_files($spoiled_files);
+
+            //instead of set
+            $this->update_files(array_keys($spoiled_files));
 
             return !empty($this->cache_map->{$function_full_name});
 
@@ -71,8 +86,22 @@ class Cache
 
     private function get_new_files($path)
     {
-        //TODO add recursive files matches *.php pattern + return new ones
-        return [];
+        $files_and_directories = scandir($path);
+        $new_files = [];
+        foreach ($files_and_directories as $element) {
+            $full_path = $path . DIRECTORY_SEPARATOR . $element;
+            if (!is_dir($element)) {
+                if (preg_match(self::PHP_FILE_PATTERN, $element) &&
+                    !array_key_exists($element, $this->files_in_use)) {
+                    $new_files[$full_path] = $full_path;
+                }
+            } else {
+                if ($element != '.' && $element != '..') {
+                    array_merge($new_files, $this->get_new_files($full_path));
+                }
+            }
+        }
+        return $new_files;
     }
 
     private function update_files($filename_list)
@@ -85,13 +114,60 @@ class Cache
 
     private function create_cache($directory)
     {
-        //TODO use get_new_files and create files for cache
-        return [];
+        $file_list = $this->get_new_files($directory);
+        foreach ($file_list as $file) {
+            $this->merge_cache(FunctionParser::parse_files_usage_functions($file));
+        }
     }
 
     private function merge_cache($updated_cache_part)
     {
-        //TODO create json merge function with versions
-        return [];
+        foreach (array_keys($updated_cache_part) as $function) {
+            if (!array_key_exists($function, $this->cache_map)) {
+                $this->cache_map[$function] = $updated_cache_part[$function];
+            } else {
+
+                $old_usage = $this->map_with_filename(
+                    $this->cache_map[$function]
+                );
+
+                $new_usage = $this->map_with_filename(
+                    $updated_cache_part[$function]
+                );
+
+                $new_file_array = [];
+
+                foreach ($old_usage as $old_file) {
+                    if (array_key_exists($old_file, $new_usage)) {
+                        if ($old_usage[$old_file]->{'time'} < $new_usage[$old_file]->{'time'}) {
+                            $new_file_array[] = $new_usage[$old_file]->{'element'};
+                        } else {
+                            $new_file_array[] = $old_usage[$old_file]->{'element'};
+                        }
+                    } else {
+                        $new_file_array[] = $old_usage[$old_file]->{'element'};
+                    }
+                }
+
+                foreach ($new_usage as $new_file) {
+                    if (!array_key_exists($new_file, $old_usage)) {
+                        $new_file_array[] = $new_usage[$new_file]->{'element'};
+                    }
+                }
+
+                $this->cache_map[$function] = $new_file_array;
+            }
+        }
+    }
+
+    private function map_with_filename($file_list) {
+        $mapped_elements = [];
+        foreach ($file_list as $file) {
+            $mapped_elements[$file->{'name'}] = array(
+                'time' => $file->{'time'},
+                'element' => $file_list[$file]
+            );
+        }
+        return $mapped_elements;
     }
 }

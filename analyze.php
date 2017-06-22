@@ -30,7 +30,7 @@ function main($argc, $argv)
 }
 
 function get_error_string($function_name, $line) {
-    return "unused function ". $function_name . "on line" . $line;
+    return "unused function ". $function_name . " on line " . $line ."\n";
 }
 
 

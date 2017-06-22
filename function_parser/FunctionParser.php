@@ -6,6 +6,7 @@ class FunctionParser
 {
     static function parse_files_functions($filename)
     {
+
         return [];
     }
 
