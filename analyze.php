@@ -1,5 +1,5 @@
 <?php
-require_once("./cache/Cache.php");
+include_once dirname(__FILE__) .  "/cache/Cache.php";
 
 main($argc, $argv);
 
@@ -14,8 +14,9 @@ function main($argc, $argv)
     $file = __DIR__ . DIRECTORY_SEPARATOR . $argv[2];
 
     try {
-        $cache = new Cache($directory);
-        $functions = FunctionParser::parse_files_functions($file);
+        $cache = new \Cache($directory);
+        $function_parser = new FunctionParser();
+        $functions = $function_parser->parse_files_functions($file);
         foreach ($functions as $function) {
             $function_full_name = explode(" ", $function);
             $function_name = $function_full_name[0];

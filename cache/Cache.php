@@ -1,6 +1,6 @@
 <?php
-require_once "../exception/PathException.php";
-require_once "../function_parser/FunctionParser.php";
+include_once dirname(__FILE__) .  "/../exception/PathException.php";
+include_once dirname(__FILE__) .  "/../function_parser/FunctionParser.php";
 
 class Cache
 {
@@ -11,6 +11,7 @@ class Cache
     private $file_path;
     private $cache_map;
     private $files_in_use;
+    private $function_parser;
 
 
     function __construct($path)
@@ -18,8 +19,9 @@ class Cache
         if (file_exists($path)) {
             $this->file_path = $path;
         } else {
-            throw new PathException("Path is incorrect - " . $path);
+            throw new \PathException("Path is incorrect - " . $path);
         }
+        $this->function_parser = new \FunctionParser();
         $this->load_cache($path);
     }
 
@@ -107,7 +109,7 @@ class Cache
     private function update_files($filename_list)
     {
         foreach ($filename_list as $filename) {
-            $new_functions_in_usage = FunctionParser::parse_files_usage_functions($filename);
+            $new_functions_in_usage = $this->function_parser->parse_files_usage_functions($filename);
             $this->merge_cache($new_functions_in_usage);
         }
     }
@@ -116,7 +118,7 @@ class Cache
     {
         $file_list = $this->get_new_files($directory);
         foreach ($file_list as $file) {
-            $this->merge_cache(FunctionParser::parse_files_usage_functions($file));
+            $this->merge_cache($this->function_parser->parse_files_usage_functions($file));
         }
     }
 
