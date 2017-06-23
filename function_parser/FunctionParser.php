@@ -15,13 +15,16 @@ class FunctionParser
 
     private function next()
     {
-        $this->next_char();
-        while (array_key_exists($this->current_char, self::SKIP_CHARS)) {
+        if (!feof($this->file)) {
             $this->next_char();
+            while (!feof($this->file) && array_key_exists($this->current_char, self::SKIP_CHARS)) {
+                $this->next_char();
+            }
         }
     }
 
-    private function next_char() {
+    private function next_char()
+    {
         $this->current_char = fgetc($this->file);
     }
 
@@ -30,15 +33,16 @@ class FunctionParser
         $files_functions = [];
         if (file_exists($filename)) {
             $this->file = fopen($filename, "r");
+            $this->skip_php_annotation();
+            $this->next();
             while (!feof($this->file)) {
-                $this->skip_php_annotation();
-                $this->next();
                 if (self::is_part_of_word($this->current_char)) {
                     $word = $this->parse_word();
                     if ($word == "function") {
                         $files_functions[] = $this->parse_function_annotation();
                     }
                 }
+                $this->next();
             }
         }
 
@@ -66,6 +70,7 @@ class FunctionParser
     {
         return $char >= "a" && $char <= "z"
             || $char >= "A" && $char <= "Z"
+            || $char >= "0" && $char <= "9"
             || $char == "_";
     }
 
@@ -73,7 +78,6 @@ class FunctionParser
     {
         $this->next();
         $function_name = $this->parse_word();
-        $this->next();
         $number_of_args = $this->get_number_of_args();
         $this->parse_function_body();
         //TODO add inner function call
@@ -83,18 +87,23 @@ class FunctionParser
     private function get_number_of_args()
     {
         if ($this->current_char == "(") {
-            $args = $this->current_char;
+            $args = "";
+            $this->next();
             while ($this->current_char != ")") {
-                $this->next();
                 $args .= $this->current_char;
+                $this->next();
             }
-            return sizeof(explode(",", $args)) - 1;
-        }
+            if ($args == "") {
+                return 0;
+            }
 
-        return 0;
+            return sizeof(explode(",", $args));
+        }
+        return false;
     }
 
-    private function parse_function_body() {
+    private function parse_function_body()
+    {
         if ($this->current_char == "{") {
             $bracket_count = 1;
             while ($bracket_count > 0) {
@@ -109,7 +118,6 @@ class FunctionParser
                 }
 
             }
-            $this->next();
         }
     }
 
