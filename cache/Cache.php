@@ -60,13 +60,13 @@ class Cache
 
     function check_function($function_full_name)
     {
-        $files_array = $this->cache_map->{$function_full_name};
+        $files_array = $this->cache_map[$function_full_name];
         if ($files_array) {
             $spoiled_files = [];
             foreach ($files_array as $file_info) {
-                $file_name = $file_info->{'name'};
-                $md5 = $file_info->{'md5'};
-                $file_last_change_time = $file_info->{'time'};
+                $file_name = $file_info["name"];
+                $md5 = $file_info["md5_hash"];
+                $file_last_change_time = $file_info["time"];
                 if (filemtime($file_name) == $file_last_change_time &&
                     $md5 == md5_file($file_name)
                 ) {
@@ -75,7 +75,8 @@ class Cache
                     $spoiled_files[$file_name] = $file_name;
                 }
             }
-            $this->cache_map->{$function_full_name} = [];
+
+            $this->cache_map[$function_full_name] = [];
 
             //instead of set
             $this->update_files(array_keys($spoiled_files));
@@ -95,7 +96,7 @@ class Cache
             $full_path = $path . DIRECTORY_SEPARATOR . $element;
             if (!is_dir($element)) {
                 if (preg_match(self::PHP_FILE_PATTERN, $element) &&
-                    !array_key_exists($element, $this->files_in_use)
+                    !array_key_exists($full_path, $this->files_in_use)
                 ) {
                     $new_files[$full_path] = $full_path;
                 }
@@ -118,8 +119,8 @@ class Cache
 
     private function create_cache($directory)
     {
-        $file_list = $this->get_new_files($directory);
-        foreach ($file_list as $file) {
+        $this->files_in_use = $this->get_new_files($directory);
+        foreach ($this->files_in_use as $file) {
             $this->merge_cache($this->function_parser->parse_files_usage_functions($file));
         }
     }
@@ -128,7 +129,7 @@ class Cache
     {
         foreach (array_keys($updated_cache_part) as $function) {
             if (!array_key_exists($function, $this->cache_map)) {
-                $this->cache_map[$function] = $updated_cache_part[$function];
+                $this->cache_map[$function] = [$updated_cache_part[$function]];
             } else {
 
                 $old_usage = $this->map_with_filename(
@@ -158,7 +159,6 @@ class Cache
                         $new_file_array[] = $new_usage[$new_file]->{'element'};
                     }
                 }
-
                 $this->cache_map[$function] = $new_file_array;
             }
         }

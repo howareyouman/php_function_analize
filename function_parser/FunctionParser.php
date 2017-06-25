@@ -96,7 +96,7 @@ class FunctionParser
             if ($args == "") {
                 return 0;
             }
-
+            $this->next();
             return sizeof(explode(",", $args));
         }
         return false;
