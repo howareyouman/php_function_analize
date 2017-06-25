@@ -1,6 +1,6 @@
 <?php
-include_once __DIR__ .  "/../exception/PathException.php";
-include_once __DIR__ .  "/../function_parser/FunctionParser.php";
+include_once __DIR__ . "/../exception/PathException.php";
+include_once __DIR__ . "/../function_parser/FunctionParser.php";
 
 class Cache
 {
@@ -23,6 +23,7 @@ class Cache
         }
         $this->function_parser = new \FunctionParser();
         $this->load_cache($path);
+        $this->store_cache($path);
     }
 
     private function load_cache($path)
@@ -45,13 +46,13 @@ class Cache
         }
     }
 
-    function store_cache()
+    private function store_cache($path)
     {
-        $fp = fopen(self::CACHE_FILENAME, 'w');
+        $fp = fopen($path . DIRECTORY_SEPARATOR . self::CACHE_FILENAME, 'w');
         fwrite($fp, json_encode($this->cache_map));
         fclose($fp);
 
-        $fp = fopen(self::FILES_USED_IN_CACHE, 'w');
+        $fp = fopen($path . DIRECTORY_SEPARATOR . self::FILES_USED_IN_CACHE, 'w');
         fwrite($fp, json_encode($this->files_in_use));
         fclose($fp);
 
@@ -94,7 +95,8 @@ class Cache
             $full_path = $path . DIRECTORY_SEPARATOR . $element;
             if (!is_dir($element)) {
                 if (preg_match(self::PHP_FILE_PATTERN, $element) &&
-                    !array_key_exists($element, $this->files_in_use)) {
+                    !array_key_exists($element, $this->files_in_use)
+                ) {
                     $new_files[$full_path] = $full_path;
                 }
             } else {
@@ -162,7 +164,8 @@ class Cache
         }
     }
 
-    private function map_with_filename($file_list) {
+    private function map_with_filename($file_list)
+    {
         $mapped_elements = [];
         foreach ($file_list as $file) {
             $mapped_elements[$file->{'name'}] = array(
