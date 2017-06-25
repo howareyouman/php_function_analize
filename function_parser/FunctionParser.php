@@ -44,6 +44,7 @@ class FunctionParser
                 }
                 $this->next();
             }
+            fclose($this->file);
         }
 
         return $files_functions;
@@ -124,6 +125,30 @@ class FunctionParser
 
     function parse_files_usage_functions($filename)
     {
-        return [];
+        $files_usage_functions = [];
+        if (file_exists($filename)) {
+            $this->file = fopen($filename, "r");
+            $this->skip_php_annotation();
+            $this->next();
+            while (!feof($this->file)) {
+                if (self::is_part_of_word($this->current_char)) {
+                    $word = $this->parse_word();
+                    if ($word == "function") {
+                        $this->parse_function_annotation();
+                    } else {
+                        if ($word[0] != "$") {
+                            $number_of_args = $this->get_number_of_args();
+                            if ($number_of_args) {
+                                $files_usage_functions[] = $word . " " . $number_of_args;
+                            }
+                        }
+                    }
+                }
+                $this->next();
+            }
+            fclose($this->file);
+        }
+
+        return $files_usage_functions;
     }
 }
