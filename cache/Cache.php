@@ -58,7 +58,7 @@ class Cache
 
     }
 
-    function check_function($function_full_name)
+    public function check_function($function_full_name)
     {
         $files_array = $this->cache_map[$function_full_name];
         if ($files_array) {
