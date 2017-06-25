@@ -1,6 +1,6 @@
 <?php
-include_once dirname(__FILE__) .  "/../exception/PathException.php";
-include_once dirname(__FILE__) .  "/../function_parser/FunctionParser.php";
+include_once __DIR__ .  "/../exception/PathException.php";
+include_once __DIR__ .  "/../function_parser/FunctionParser.php";
 
 class Cache
 {

@@ -1,7 +1,5 @@
 <?php
 
-//TODO create simple parser
-
 class FunctionParser
 {
     private $file;
@@ -31,6 +29,7 @@ class FunctionParser
     function parse_files_functions($filename)
     {
         $files_functions = [];
+        $file_info = $this->get_file_info($filename);
         if (file_exists($filename)) {
             $this->file = fopen($filename, "r");
             $this->skip_php_annotation();
@@ -39,7 +38,7 @@ class FunctionParser
                 if (self::is_part_of_word($this->current_char)) {
                     $word = $this->parse_word();
                     if ($word == "function") {
-                        $files_functions[] = $this->parse_function_annotation();
+                        $files_functions[$this->parse_function_annotation()] = $file_info;
                     }
                 }
                 $this->next();
@@ -126,6 +125,7 @@ class FunctionParser
     function parse_files_usage_functions($filename)
     {
         $files_usage_functions = [];
+        $file_info = $this->get_file_info($filename);
         if (file_exists($filename)) {
             $this->file = fopen($filename, "r");
             $this->skip_php_annotation();
@@ -139,7 +139,7 @@ class FunctionParser
                         if ($word[0] != "$") {
                             $number_of_args = $this->get_number_of_args();
                             if ($number_of_args) {
-                                $files_usage_functions[] = $word . " " . $number_of_args;
+                                $files_usage_functions[$word . " " . $number_of_args] = $file_info;
                             }
                         }
                     }
@@ -150,5 +150,14 @@ class FunctionParser
         }
 
         return $files_usage_functions;
+    }
+
+    public static function get_file_info($filename)
+    {
+        $file_info = [];
+        $file_info['name'] = $filename;
+        $file_info['md5_hash'] = md5_file($filename);
+        $file_info['time'] = filemtime($filename);
+        return $file_info;
     }
 }
