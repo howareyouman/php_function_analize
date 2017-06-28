@@ -94,7 +94,7 @@ class Cache
         $new_files = [];
         foreach ($files_and_directories as $element) {
             $full_path = $path . DIRECTORY_SEPARATOR . $element;
-            if (!is_dir($element)) {
+            if (!is_dir($full_path)) {
                 if (preg_match(self::PHP_FILE_PATTERN, $element) &&
                     !array_key_exists($full_path, $this->files_in_use)
                 ) {
@@ -102,7 +102,7 @@ class Cache
                 }
             } else {
                 if ($element != '.' && $element != '..') {
-                    array_merge($new_files, $this->get_new_files($full_path));
+                    $new_files = array_merge($new_files, $this->get_new_files($full_path));
                 }
             }
         }

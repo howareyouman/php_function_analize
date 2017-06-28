@@ -1,11 +1,11 @@
 <?php
 include_once __DIR__ . "/../../cache/Cache.php";
 
-function test_one_function()
+function inner_directory_test()
 {
     $directory = __DIR__ . DIRECTORY_SEPARATOR . "test_directory";
     $cache = new \Cache($directory);
-    $test_result = $cache->check_function("one_func 3");
+    $test_result = $cache->check_function("abc 0");
     var_dump($test_result == true);
     if ($test_result) {
         unlink($directory . DIRECTORY_SEPARATOR . "__cache__.json");
@@ -13,4 +13,4 @@ function test_one_function()
     }
 }
 
-test_one_function();
+inner_directory_test();

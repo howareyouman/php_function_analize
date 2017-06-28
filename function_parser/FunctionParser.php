@@ -5,6 +5,7 @@ class FunctionParser
     private $file;
     private $current_char;
     const SKIP_CHARS = [" " => "", "\n" => "", "\t" => "", "\r" => "", ";" => ""];
+    const SKIP_LINE = ["include_once" => "", "require_once" => "", "require" => "", "include" => ""];
 
     function __construct()
     {
@@ -18,6 +19,13 @@ class FunctionParser
             while (!feof($this->file) && array_key_exists($this->current_char, self::SKIP_CHARS)) {
                 $this->next_char();
             }
+        }
+    }
+
+    private function skip_to_char($char)
+    {
+        while ($this->current_char != $char) {
+            $this->next_char();
         }
     }
 
@@ -136,10 +144,14 @@ class FunctionParser
                     if ($word == "function") {
                         $this->parse_function_annotation();
                     } else {
-                        if ($word[0] != "$") {
-                            $number_of_args = $this->get_number_of_args();
-                            if ($number_of_args) {
-                                $files_usage_functions[$word . " " . $number_of_args] = $file_info;
+                        if (array_key_exists($word, self::SKIP_LINE)) {
+                            $this->skip_to_char("\n");
+                        } else {
+                            if ($word[0] != "$") {
+                                $number_of_args = $this->get_number_of_args();
+                                if ($number_of_args >= 0) {
+                                    $files_usage_functions[$word . " " . $number_of_args] = $file_info;
+                                }
                             }
                         }
                     }
