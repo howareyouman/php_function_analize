@@ -1,7 +1,7 @@
 <?php
 include_once __DIR__ . "/../../cache/Cache.php";
 
-function test_one_function()
+function one_file_test()
 {
     $directory = __DIR__ . DIRECTORY_SEPARATOR . "test_directory";
     $cache = new \Cache($directory);
@@ -12,5 +12,3 @@ function test_one_function()
         unlink($directory . DIRECTORY_SEPARATOR . "__file_index__.json");
     }
 }
-
-test_one_function();

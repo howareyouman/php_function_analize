@@ -60,8 +60,8 @@ class Cache
 
     public function check_function($function_full_name)
     {
-        $files_array = $this->cache_map[$function_full_name];
-        if ($files_array) {
+        if (key_exists($function_full_name, $this->cache_map)) {
+            $files_array = $this->cache_map[$function_full_name];
             $spoiled_files = [];
             foreach ($files_array as $file_info) {
                 $file_name = $file_info["name"];
@@ -83,6 +83,14 @@ class Cache
 
             return !empty($this->cache_map->{$function_full_name});
 
+        } else {
+            $new_files = $this->get_new_files($this->file_path);
+            if (sizeof($new_files) > 0) {
+                $this->files_in_use = array_merge($this->files_in_use, $new_files);
+                $this->update_files($new_files);
+                $this->store_cache($this->file_path);
+                return $this->check_function($function_full_name);
+            }
         }
 
         return false;
@@ -95,10 +103,22 @@ class Cache
         foreach ($files_and_directories as $element) {
             $full_path = $path . DIRECTORY_SEPARATOR . $element;
             if (!is_dir($full_path)) {
-                if (preg_match(self::PHP_FILE_PATTERN, $element) &&
-                    !array_key_exists($full_path, $this->files_in_use)
-                ) {
-                    $new_files[$full_path] = $full_path;
+                if (preg_match(self::PHP_FILE_PATTERN, $element)) {
+                    if (!array_key_exists($full_path, $this->files_in_use)) {
+                        $new_files[$full_path] = array(
+                            "md5_hash" => md5_file($full_path),
+                            "time" => filemtime($full_path)
+                        );
+                    } else {
+                        if ($this->files_in_use[$full_path]["md5_hash"] !== md5_file($full_path) ||
+                            $this->files_in_use[$full_path]["time"] !== filemtime($full_path)
+                        ) {
+                            $new_files[$full_path] = array(
+                                "md5_hash" => md5_file($full_path),
+                                "time" => filemtime($full_path)
+                            );
+                        }
+                    }
                 }
             } else {
                 if ($element != '.' && $element != '..') {
@@ -111,7 +131,7 @@ class Cache
 
     private function update_files($filename_list)
     {
-        foreach ($filename_list as $filename) {
+        foreach (array_keys($filename_list) as $filename) {
             $new_functions_in_usage = $this->function_parser->parse_files_usage_functions($filename);
             $this->merge_cache($new_functions_in_usage);
         }
@@ -120,7 +140,7 @@ class Cache
     private function create_cache($directory)
     {
         $this->files_in_use = $this->get_new_files($directory);
-        foreach ($this->files_in_use as $file) {
+        foreach (array_keys($this->files_in_use) as $file) {
             $this->merge_cache($this->function_parser->parse_files_usage_functions($file));
         }
     }

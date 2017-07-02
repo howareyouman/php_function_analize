@@ -20,4 +20,3 @@ function empty_test() {
     }
     var_dump($test_result == true);
 }
-empty_test();

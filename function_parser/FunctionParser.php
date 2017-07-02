@@ -79,14 +79,21 @@ class FunctionParser
         return $char >= "a" && $char <= "z"
             || $char >= "A" && $char <= "Z"
             || $char >= "0" && $char <= "9"
-            || $char == "_";
+            || $char == "_" || $char == "$";
     }
 
     private function parse_function_annotation()
     {
         $this->next();
         $function_name = $this->parse_word();
+
+        if ($this->current_char != "(") {
+            $this->next();
+        }
+
         $number_of_args = $this->get_number_of_args();
+        $this->next();
+
         $this->parse_function_body();
         //TODO add inner function call
         return $function_name . " " . $number_of_args;
@@ -101,10 +108,11 @@ class FunctionParser
                 $args .= $this->current_char;
                 $this->next();
             }
+
             if ($args == "") {
                 return 0;
             }
-            $this->next();
+
             return sizeof(explode(",", $args));
         }
         return false;

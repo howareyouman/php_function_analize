@@ -1,8 +1,6 @@
 <?php
 include_once dirname(__FILE__) . '/../../function_parser/FunctionParser.php';
 
-test_function_parser();
-
 function test_function_parser() {
     $function_parser = new \FunctionParser();
     simple_function_annotation_test($function_parser);

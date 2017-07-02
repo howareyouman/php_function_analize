@@ -12,5 +12,3 @@ function inner_directory_test()
         unlink($directory . DIRECTORY_SEPARATOR . "__file_index__.json");
     }
 }
-
-inner_directory_test();
