@@ -18,5 +18,5 @@ function empty_test() {
             unlink($file_index_cache);
         }
     }
-    var_dump($test_result == true);
+    return $test_result;
 }

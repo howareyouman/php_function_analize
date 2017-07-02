@@ -31,12 +31,11 @@ class Cache
         $cache_filename = $path . DIRECTORY_SEPARATOR . self::CACHE_FILENAME;
         $file_index_filename = $path . DIRECTORY_SEPARATOR . self::FILES_USED_IN_CACHE;
         if (file_exists($cache_filename) && file_exists($file_index_filename)) {
-            $this->cache_map = json_decode(file_get_contents($path));
-            $this->files_in_use = json_decode(file_get_contents($file_index_filename));
-
+            $this->cache_map = json_decode(file_get_contents($cache_filename), true);
+            $this->files_in_use = json_decode(file_get_contents($file_index_filename), true);
             $new_files = $this->get_new_files($path);
             if (!empty($new_files)) {
-                array_merge($this->files_in_use, $new_files);
+                $this->files_in_use = array_merge($this->files_in_use, $new_files);
                 $this->update_files($new_files);
             }
         } else {
@@ -110,8 +109,8 @@ class Cache
                             "time" => filemtime($full_path)
                         );
                     } else {
-                        if ($this->files_in_use[$full_path]["md5_hash"] !== md5_file($full_path) ||
-                            $this->files_in_use[$full_path]["time"] !== filemtime($full_path)
+                        if ($this->files_in_use[$full_path]["md5_hash"] != md5_file($full_path) ||
+                            $this->files_in_use[$full_path]["time"] != filemtime($full_path)
                         ) {
                             $new_files[$full_path] = array(
                                 "md5_hash" => md5_file($full_path),
