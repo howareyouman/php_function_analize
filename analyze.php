@@ -10,17 +10,17 @@ function main($argc, $argv)
         return;
     }
 
-    $directory = __DIR__ . DIRECTORY_SEPARATOR . $argv[1];
-    $file = __DIR__ . DIRECTORY_SEPARATOR . $argv[2];
+    $directory = $argv[1];
+    $file = $argv[2];
 
     try {
         $cache = new \Cache($directory);
         $function_parser = new FunctionParser();
         $functions = $function_parser->parse_files_functions($file);
-        foreach ($functions as $function) {
+        foreach (array_keys($functions) as $function) {
             $function_full_name = explode(" ", $function);
             $function_name = $function_full_name[0];
-            $function_line = $function->{'line'};
+            $function_line = $functions[$function]['line'];
             if (!$cache->check_function($function)) {
                 echo get_error_string($function_name, $function_line);
             }

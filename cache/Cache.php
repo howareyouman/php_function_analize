@@ -34,7 +34,14 @@ class Cache
             $this->cache_map = json_decode(file_get_contents($cache_filename), true);
             $this->files_in_use = json_decode(file_get_contents($file_index_filename), true);
             $new_files = $this->get_new_files($path);
+            var_dump($new_files);
+            var_dump($this->cache_map);
             if (!empty($new_files)) {
+                foreach (array_keys($new_files) as $new_file) {
+                    if (array_key_exists($new_file, $this->cache_map)) {
+                        unset($this->cache_map[$new_file]);
+                    }
+                }
                 $this->files_in_use = array_merge($this->files_in_use, $new_files);
                 $this->update_files($new_files);
             }

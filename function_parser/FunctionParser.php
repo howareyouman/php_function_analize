@@ -4,12 +4,13 @@ class FunctionParser
 {
     private $file;
     private $current_char;
+    private $line_count;
     const SKIP_CHARS = [" " => "", "\n" => "", "\t" => "", "\r" => "", ";" => ""];
     const SKIP_LINE = ["include_once" => "", "require_once" => "", "require" => "", "include" => ""];
 
     function __construct()
     {
-
+        $this->line_count = 1;
     }
 
     private function next()
@@ -17,6 +18,9 @@ class FunctionParser
         if (!feof($this->file)) {
             $this->next_char();
             while (!feof($this->file) && array_key_exists($this->current_char, self::SKIP_CHARS)) {
+                if ($this->current_char == "\n") {
+                    $this->line_count++;
+                }
                 $this->next_char();
             }
         }
@@ -37,8 +41,8 @@ class FunctionParser
     function parse_files_functions($filename)
     {
         $files_functions = [];
-        $file_info = $this->get_file_info($filename);
         if (file_exists($filename)) {
+            $file_info = $this->get_file_info($filename);
             $this->file = fopen($filename, "r");
             $this->skip_php_annotation();
             $this->next();
@@ -46,7 +50,9 @@ class FunctionParser
                 if (self::is_part_of_word($this->current_char)) {
                     $word = $this->parse_word();
                     if ($word == "function") {
-                        $files_functions[$this->parse_function_annotation()] = $file_info;
+                        $function_info = $file_info;
+                        $function_info['line'] = $this->line_count;
+                        $files_functions[$this->parse_function_annotation()] = $function_info;
                     }
                 }
                 $this->next();
